@@ -8,7 +8,7 @@ It is a well known in model theory that the generic triangle free random graph i
 1. $\phi_0: \forall x_1,x_2,x_3, \neg\exists (E(x_1,x_2)\wedge E(x_1,x_3)\wedge E(x_2,x_3))$,
 2. $\psi_k$: For $1\leq a \leq k$,  $\forall x_1,...,x_a, \wedge_{i\neq j} \neg E(x_i,x_j)\bigwedge y_1,...,y_{k-a}, \exists z : [\bigwedge_{1\leq i\leq k} E(z,x_i)]\wedge [\bigwedge_{1\leq i\leq k} \neg E(z,y_i)]$
 
-It is easy to find graphs which satisfy $(\phi_0$ and $\psi_1)$. It is unknown if any graphs exist which satisfy $(\phi_0\wedge \psi_2)$, let alone some large $n$. 
+It is easy to find graphs which satisfy $(\phi_0$ and $\psi_2)$, they are maximal triangle-free, twin-free. For $(\phi_0$ and $\psi_3)$ a handful of infinite families are known to exist It is unknown if any graphs exist which satisfy $(\phi_0\wedge \psi_4)$, let alone some large $n$. 
 
 If a class of graphs $\mathcal{G}=\{G_n:n\in \mathbb{N}\}$ could be found where $G_n\vDash \phi_0\wedge \psi_n$ then this would resolve Cherlin's problem on the pseudofiniteness of the generic triangle free random graph. 
 # Variations of Axiomatizations
