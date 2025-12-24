@@ -6,6 +6,7 @@ import pickle
 import os
 import sys
 import itertools
+import time
 
 def check_geng_availability():
     """Checks if geng is available in the system path."""
@@ -25,25 +26,34 @@ def generate_graphs(n):
     
     print(f"Running command: {' '.join(cmd)}")
     
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error running geng: {e}")
-        return []
-
-    graph_lines = result.stdout.strip().split('\n')
+    start_time = time.time()
     graphs = []
-    for line in graph_lines:
-        if line:
-            # graph6 strings might have trailing newlines or whitespace
+    
+    try:
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
+        
+        for line in process.stdout:
             line = line.strip()
             if not line: continue
             try:
                 G = nx.from_graph6_bytes(line.encode('ascii'))
                 graphs.append(G)
+                print(f"Generated {len(graphs)} graphs...", end='\r')
             except Exception as e:
-                print(f"Failed to parse graph6 line '{line}': {e}")
+                print(f"\nFailed to parse graph6 line '{line}': {e}")
+        
+        process.wait()
+        if process.returncode != 0:
+            stderr = process.stderr.read()
+            print(f"\ngeng error: {stderr}")
             
+    except Exception as e:
+        print(f"Error running geng: {e}")
+        return []
+
+    end_time = time.time()
+    elapsed = end_time - start_time
+    print(f"\nGeneration complete. Total: {len(graphs)} graphs. Time elapsed: {elapsed:.2f} seconds.")
     return graphs
 
 def is_independent_set(G, nodes):
@@ -145,14 +155,19 @@ def main():
         
     print(f"Generating triangle-free connected graphs of size {args.N}...")
     all_graphs = generate_graphs(args.N)
-    print(f"Generated {len(all_graphs)} raw graphs. Filtering for Corollary 4 properties...")
     
+    print(f"Filtering {len(all_graphs)} raw graphs for Corollary 4 properties...")
+    start_filter_time = time.time()
     valid_graphs = []
-    for G in all_graphs:
+    
+    for i, G in enumerate(all_graphs):
         if check_corollary_4_properties(G):
             valid_graphs.append(G)
+        print(f"Tested {i+1}/{len(all_graphs)} | Found: {len(valid_graphs)}", end='\r')
             
-    print(f"Found {len(valid_graphs)} graphs satisfying all properties.")
+    end_filter_time = time.time()
+    filter_elapsed = end_filter_time - start_filter_time
+    print(f"\nFiltering complete. Found {len(valid_graphs)} graphs. Time elapsed: {filter_elapsed:.2f} seconds.")
     
     if valid_graphs:
         # Determine output filename if default is used, to avoid overwriting or just use the arg
