@@ -10,17 +10,17 @@ def is_independent_set(G, nodes):
             return False
     return True
 
-def check_properties(G, n):
+def check_properties(G, k):
     """
-    Checks if Graph G satisfies property Psi_n.
+    Checks if Graph G satisfies property Psi_k.
     
-    Psi_n: For all x_1,...,x_n (Independent Set), and y_1,...,y_n (disjoint from x),
+    Psi_k: For all x_1,...,x_k (Independent Set), and y_1,...,y_k (disjoint from x),
     there exists a z which is connected to all x_i but not any y_i.
     """
     nodes = list(G.nodes())
-    # Property requires existence of sets of size n.
-    if len(nodes) < 2 * n + 1:
-        # We need n nodes for X, n for Y, and 1 for z.
+    # Property requires existence of sets of size k.
+    if len(nodes) < 2 * k + 1:
+        # We need k nodes for X, k for Y, and 1 for z.
         # If not enough nodes, the condition "For all X, Y... exists z" fails if X, Y exist but z doesn't.
         # If X or Y can't even be formed, is it true or false?
         # Standard logic: vacuously true if X/Y don't exist.
@@ -28,25 +28,25 @@ def check_properties(G, n):
         # If X and Y CANNOT exist, then True.
         
         # Let's check if any valid X, Y pair exists.
-        # If the graph is too small to have ANY disjoint X, Y of size n, then the condition is True vacuously.
-        if len(nodes) < 2 * n:
+        # If the graph is too small to have ANY disjoint X, Y of size k, then the condition is True vacuously.
+        if len(nodes) < 2 * k:
              return True
-        # If we have >= 2n nodes but < 2n+1, we might have X, Y but no room for z.
+        # If we have >= 2k nodes but < 2k+1, we might have X, Y but no room for z.
         # In that case, if we find such X, Y, return False.
         pass
 
-    # 1. Iterate all Independent Sets X of size n
-    for X in itertools.combinations(nodes, n):
+    # 1. Iterate all Independent Sets X of size k
+    for X in itertools.combinations(nodes, k):
         if not is_independent_set(G, X):
             continue
         
         X_set = set(X)
         remaining_nodes = [node for node in nodes if node not in X_set]
         
-        # 2. Iterate all sets Y of size n disjoint from X
+        # 2. Iterate all sets Y of size k disjoint from X
         # Note: If no such Y exists, the inner loop doesn't run, 
         # so we don't return False, effectively passing this X check.
-        for Y in itertools.combinations(remaining_nodes, n):
+        for Y in itertools.combinations(remaining_nodes, k):
             Y_set = set(Y)
             
             # 3. Search for a witness z
@@ -71,16 +71,16 @@ def check_properties(G, n):
 
     return True
 
-def generate_triangle_free_graphs(k):
+def generate_triangle_free_graphs(N):
     """
-    Generates all labeled triangle-free graphs of size k.
+    Generates all labeled triangle-free graphs of size N.
     Uses recursive backtracking by adding nodes one by one, 
     connecting only to independent sets of the previous graph.
     """
     # Start with a single node 0
     G = nx.Graph()
     G.add_node(0)
-    yield from _recursive_build(G, k)
+    yield from _recursive_build(G, N)
 
 def _recursive_build(G, target_size):
     current_size = G.number_of_nodes()
@@ -107,18 +107,18 @@ def _recursive_build(G, target_size):
                 yield from _recursive_build(G_new, target_size)
 
 def main():
-    parser = argparse.ArgumentParser(description="Search for triangle-free graphs with property Psi_n.")
-    parser.add_argument("k", type=int, help="Size of the graph (number of vertices)")
-    parser.add_argument("n", type=int, help="Parameter n for property Psi_n")
+    parser = argparse.ArgumentParser(description="Search for triangle-free graphs with property Psi_k.")
+    parser.add_argument("N", type=int, help="Size of the graph (number of vertices)")
+    parser.add_argument("k", type=int, help="Parameter k for property Psi_k")
     parser.add_argument("--limit", type=int, default=0, help="Stop after finding this many graphs (0 for all)")
     parser.add_argument("--show", action="store_true", help="Print edges of found graphs")
     
     args = parser.parse_args()
     
-    k = args.k
-    n_param = args.n
+    N = args.N
+    k_param = args.k
     
-    print(f"Searching for triangle-free graphs of size {k} with property Psi_{n_param}...")
+    print(f"Searching for triangle-free graphs of size {N} with property Psi_{k_param}...")
     
     count = 0
     found_count = 0
@@ -127,9 +127,9 @@ def main():
     # but the generator produces labeled graphs. 
     # For 'all models', we usually list them.
     
-    for G in generate_triangle_free_graphs(k):
+    for G in generate_triangle_free_graphs(N):
         count += 1
-        if check_properties(G, n_param):
+        if check_properties(G, k_param):
             found_count += 1
             if args.show:
                 print(f"Graph {found_count}: Edges: {list(G.edges())}")
@@ -142,7 +142,7 @@ def main():
     
     print(f"\nSearch complete.")
     print(f"Generated {count} labeled triangle-free graphs.")
-    print(f"Found {found_count} graphs satisfying Psi_{n_param}.")
+    print(f"Found {found_count} graphs satisfying Psi_{k_param}.")
 
 if __name__ == "__main__":
     main()
