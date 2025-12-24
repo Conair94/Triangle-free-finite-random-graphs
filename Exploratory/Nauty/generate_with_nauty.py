@@ -63,11 +63,7 @@ def check_corollary_4_properties(G):
     # Property 1: Common neighbor for IS of size <= 3
     nodes = list(G.nodes())
     for k in range(1, 4): # Sizes 1, 2, 3
-        # If graph is smaller than k, we can't form size k sets, so strictly speaking condition holds vacuously?
-        # Or does it fail? Usually implies "for all sets THAT EXIST".
-        if len(nodes) < k:
-            continue
-
+        
         for subset in itertools.combinations(nodes, k):
             if is_independent_set(G, subset):
                 # Check for common neighbor
