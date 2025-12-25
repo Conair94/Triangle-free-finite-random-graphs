@@ -16,13 +16,13 @@ def check_geng_availability():
     except FileNotFoundError:
         return False
 
-def generate_graphs(n):
-    """Generates triangle-free connected graphs of size n using geng."""
-    # Command: geng -ct n
+def generate_graphs(n, res, mod):
+    """Generates triangle-free connected graphs of size n using geng for a specific slice."""
+    # Command: geng -ct n res/mod
     # -c: connected
     # -t: triangle-free
     # -q: suppress auxiliary output
-    cmd = ["geng", "-ctq", str(n)]
+    cmd = ["geng", "-Ctqd4D7", str(n), f"{res}/{mod}"]
     
     print(f"Running command: {' '.join(cmd)}")
     
@@ -38,7 +38,7 @@ def generate_graphs(n):
             try:
                 G = nx.from_graph6_bytes(line.encode('ascii'))
                 graphs.append(G)
-                print(f"Generated {len(graphs)} graphs...", end='\r')
+                # print(f"Generated {len(graphs)} graphs...", end='\r') # Reduced verbosity for slice loop
             except Exception as e:
                 print(f"\nFailed to parse graph6 line '{line}': {e}")
         
@@ -53,7 +53,7 @@ def generate_graphs(n):
 
     end_time = time.time()
     elapsed = end_time - start_time
-    print(f"\nGeneration complete. Total: {len(graphs)} graphs. Time elapsed: {elapsed:.2f} seconds.")
+    print(f"Slice {res}/{mod} complete. Generated: {len(graphs)} graphs. Time: {elapsed:.2f}s.")
     return graphs
 
 def is_independent_set(G, nodes):
@@ -152,36 +152,62 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     results_dir = os.path.join(script_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
+    
+    # Prompt for denominator (modulus)
+    try:
+        modulus = int(input("Enter the slice denominator (modulus): "))
+        if modulus <= 0:
+            raise ValueError
+    except ValueError:
+        print("Invalid modulus. Using default 1 (no slicing).")
+        modulus = 1
         
-    print(f"Generating triangle-free connected graphs of size {args.N}...")
-    all_graphs = generate_graphs(args.N)
+    print(f"Generating triangle-free connected graphs of size {args.N} in {modulus} slices...")
     
-    print(f"Filtering {len(all_graphs)} raw graphs for Corollary 4 properties...")
-    start_filter_time = time.time()
-    valid_graphs = []
+    total_valid_graphs = []
     
-    for i, G in enumerate(all_graphs):
-        if check_corollary_4_properties(G):
-            valid_graphs.append(G)
-        print(f"Tested {i+1}/{len(all_graphs)} | Found: {len(valid_graphs)}", end='\r')
-            
-    end_filter_time = time.time()
-    filter_elapsed = end_filter_time - start_filter_time
-    print(f"\nFiltering complete. Found {len(valid_graphs)} graphs. Time elapsed: {filter_elapsed:.2f} seconds.")
-    
-    if valid_graphs:
-        # Determine output filename if default is used, to avoid overwriting or just use the arg
-        output_filename = args.output
-        if output_filename == "generated_graphs.pkl":
-             output_filename = f"generated_graphs_n{args.N}.pkl"
-        
-        output_path = os.path.join(results_dir, output_filename)
+    # Determine output filename template
+    output_filename = args.output
+    if output_filename == "generated_graphs.pkl":
+         output_filename = f"generated_graphs_n{args.N}.pkl"
+    output_path = os.path.join(results_dir, output_filename)
 
-        with open(output_path, "wb") as f:
-            pickle.dump(valid_graphs, f)
-        print(f"Graphs saved to {output_path}")
+    start_total_time = time.time()
+    
+    for res in range(modulus):
+        # res is 0-indexed in range, but geng might expect 0..mod-1.
+        # geng syntax: res/mod where 0 <= res < mod.
         
-        visualize_graphs(valid_graphs, args.N, results_dir)
+        print(f"--- Processing Slice {res}/{modulus} ---")
+        slice_graphs = generate_graphs(args.N, res, modulus)
+        
+        if not slice_graphs:
+            continue
+            
+        print(f"Filtering {len(slice_graphs)} graphs from slice {res}/{modulus}...")
+        
+        slice_valid = []
+        for G in slice_graphs:
+            if check_corollary_4_properties(G):
+                slice_valid.append(G)
+        
+        print(f"Slice {res}/{modulus}: Found {len(slice_valid)} valid graphs.")
+        
+        if slice_valid:
+            total_valid_graphs.extend(slice_valid)
+            
+            # Save incrementally (overwrite file with accumulated results)
+            # Alternatively, could save separate files per slice, but one file is usually preferred.
+            with open(output_path, "wb") as f:
+                pickle.dump(total_valid_graphs, f)
+            print(f"Total valid graphs so far: {len(total_valid_graphs)}. Saved to {output_path}")
+
+    end_total_time = time.time()
+    print(f"\nAll slices complete. Total time: {end_total_time - start_total_time:.2f} seconds.")
+    print(f"Total valid graphs found: {len(total_valid_graphs)}")
+    
+    if total_valid_graphs:
+        visualize_graphs(total_valid_graphs, args.N, results_dir)
     else:
         print("No graphs found matching the criteria.")
 
