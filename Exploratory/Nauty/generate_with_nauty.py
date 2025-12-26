@@ -31,9 +31,9 @@ def generate_graphs(n, res, mod):
     nedges_max = math.floor((((n-1)**2)/4)+1)
     # nedges_max is the upperbound on number of edges for a maximal non bipartite triangle free graph
     nedges_min = 3*n-15
-    # nedges_min is the min number of edges as established by work of Erdos, DOI: 10.1002/jgt.3190180606
+    # nedges_min is the min number of edges for a maximal triangle free graph as established by work of Erdos, DOI: 10.1002/jgt.3190180606
 
-    cmd = ["geng", "-Ctqd3D8", str(n), f"{nedges_min}:{nedges_max}" ,f"{res}/{mod}"]
+    cmd = ["geng", "-Ctqd4D9", str(n), f"{nedges_min}:{nedges_max}" ,f"{res}/{mod}"]
     
     print(f"Running command: {' '.join(cmd)}")
     
