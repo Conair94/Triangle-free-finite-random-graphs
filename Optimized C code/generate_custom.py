@@ -44,12 +44,16 @@ def compile_filter():
             
     return output_file
 
-def generate_custom_graphs(n, res, mod, output_file=None, quiet=False):
+def generate_custom_graphs(n, res, mod, min_deg=3, max_deg=None, output_file=None, quiet=False):
     """
     Generates graphs using geng and filters them using the custom C program.
     """
     filter_exe = compile_filter()
     
+    # Set default max_deg if not provided
+    if max_deg is None:
+        max_deg = math.ceil(n / 2)
+
     # Calculate edge bounds
     # Min edges: 3n - 15
     # Max edges: floor(((n-1)^2)/4 + 1)
@@ -67,14 +71,15 @@ def generate_custom_graphs(n, res, mod, output_file=None, quiet=False):
     # -C: biconnected
     # -t: triangle-free
     # -q: suppress aux output
-    # Note: d4D9 (degree bounds) are OMITTED based on user instructions to focus on edge bounds.
-    # If degree bounds are required, add "-d4D9" to the flags.
+    # -d#: min degree
+    # -D#: max degree
     
-    geng_cmd = ["geng", "-Ctq", str(n), edge_range, f"{res}/{mod}"]
+    geng_cmd = ["geng", f"-Ctqd{min_deg}D{max_deg}", str(n), edge_range, f"{res}/{mod}"]
     
     if not quiet:
         print(f"Running pipeline: {' '.join(geng_cmd)} | {os.path.basename(filter_exe)}")
         print(f"Edge bounds: {edge_range}")
+        print(f"Degree bounds: {min_deg}-{max_deg}")
 
     start_time = time.time()
     count = 0
@@ -123,15 +128,20 @@ def main():
     parser.add_argument("N", type=int, help="Number of vertices")
     parser.add_argument("--res", type=int, default=0, help="Res for splitting (geng res/mod)")
     parser.add_argument("--mod", type=int, default=1, help="Mod for splitting (geng res/mod)")
+    parser.add_argument("--min-deg", type=int, default=3, help="Minimum degree (default 3)")
+    parser.add_argument("--max-deg", type=int, default=None, help="Maximum degree (default ceil(N/2))")
     parser.add_argument("--output", type=str, default=None, help="Output file (optional)")
     
     args = parser.parse_args()
     
     # If output not specified, create a default name
     if args.output is None:
-        args.output = f"graphs_n{args.N}_{args.res}_{args.mod}.g6"
+        deg_str = f"_deg{args.min_deg}"
+        if args.max_deg:
+            deg_str += f"_{args.max_deg}"
+        args.output = f"graphs_n{args.N}{deg_str}_{args.res}_{args.mod}.g6"
         
-    generate_custom_graphs(args.N, args.res, args.mod, args.output)
+    generate_custom_graphs(args.N, args.res, args.mod, args.min_deg, args.max_deg, args.output)
 
 if __name__ == "__main__":
     main()
