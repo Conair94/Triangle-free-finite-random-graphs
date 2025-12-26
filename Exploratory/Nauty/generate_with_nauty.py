@@ -22,6 +22,7 @@ def generate_graphs(n, res, mod):
     # -c: connected
     # -t: triangle-free
     # -q: suppress auxiliary output
+    # d4 min degree is 4
     cmd = ["geng", "-Ctqd4D7", str(n), f"{res}/{mod}"]
     
     print(f"Running command: {' '.join(cmd)}")
@@ -153,6 +154,10 @@ def main():
     results_dir = os.path.join(script_dir, "results")
     os.makedirs(results_dir, exist_ok=True)
     
+    # Setup graphml directory
+    graphml_dir = os.path.join(results_dir, f"graphml_n{args.N}")
+    os.makedirs(graphml_dir, exist_ok=True)
+    
     # Prompt for denominator (modulus)
     try:
         modulus = int(input("Enter the slice denominator (modulus): "))
@@ -166,12 +171,6 @@ def main():
     
     total_valid_graphs = []
     
-    # Determine output filename template
-    output_filename = args.output
-    if output_filename == "generated_graphs.pkl":
-         output_filename = f"generated_graphs_n{args.N}.pkl"
-    output_path = os.path.join(results_dir, output_filename)
-
     start_total_time = time.time()
     
     for res in range(modulus):
@@ -194,13 +193,14 @@ def main():
         print(f"Slice {res}/{modulus}: Found {len(slice_valid)} valid graphs.")
         
         if slice_valid:
-            total_valid_graphs.extend(slice_valid)
+            # Save as .graphml files incrementally
+            for G in slice_valid:
+                graph_idx = len(total_valid_graphs) + 1
+                graphml_path = os.path.join(graphml_dir, f"graph_{graph_idx}.graphml")
+                nx.write_graphml(G, graphml_path)
+                total_valid_graphs.append(G)
             
-            # Save incrementally (overwrite file with accumulated results)
-            # Alternatively, could save separate files per slice, but one file is usually preferred.
-            with open(output_path, "wb") as f:
-                pickle.dump(total_valid_graphs, f)
-            print(f"Total valid graphs so far: {len(total_valid_graphs)}. Saved to {output_path}")
+            print(f"Total valid graphs so far: {len(total_valid_graphs)}. Saved to {graphml_dir}")
 
     end_total_time = time.time()
     print(f"\nAll slices complete. Total time: {end_total_time - start_total_time:.2f} seconds.")
