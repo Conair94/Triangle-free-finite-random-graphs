@@ -23,7 +23,7 @@ def compile_filter():
         # This is a heuristic; user might need to adjust.
         # We append these flags only if simple compilation fails? 
         # Or just add them optimistically if directories exist.
-        possible_includes = ["/usr/local/include", "/opt/homebrew/include", "/usr/include/nauty"]
+        possible_includes = ["/usr/local/include", "/opt/homebrew/include", "/usr/include/nauty", "/usr/local/include/nauty", "/opt/homebrew/include/nauty"]
         for inc in possible_includes:
             if os.path.exists(inc):
                 cmd.extend(["-I", inc])
@@ -44,7 +44,7 @@ def compile_filter():
             
     return output_file
 
-def generate_custom_graphs(n, res, mod, output_file=None):
+def generate_custom_graphs(n, res, mod, output_file=None, quiet=False):
     """
     Generates graphs using geng and filters them using the custom C program.
     """
@@ -72,8 +72,9 @@ def generate_custom_graphs(n, res, mod, output_file=None):
     
     geng_cmd = ["geng", "-Ctq", str(n), edge_range, f"{res}/{mod}"]
     
-    print(f"Running pipeline: {' '.join(geng_cmd)} | {os.path.basename(filter_exe)}")
-    print(f"Edge bounds: {edge_range}")
+    if not quiet:
+        print(f"Running pipeline: {' '.join(geng_cmd)} | {os.path.basename(filter_exe)}")
+        print(f"Edge bounds: {edge_range}")
 
     start_time = time.time()
     count = 0
@@ -98,19 +99,22 @@ def generate_custom_graphs(n, res, mod, output_file=None):
         geng_proc.wait()
         
     except Exception as e:
-        print(f"Error during generation: {e}")
+        if not quiet:
+            print(f"Error during generation: {e}")
         return []
         
     end_time = time.time()
     elapsed = end_time - start_time
     
-    print(f"Slice {res}/{mod} complete. Found {count} valid graphs in {elapsed:.2f}s.")
+    if not quiet:
+        print(f"Slice {res}/{mod} complete. Found {count} valid graphs in {elapsed:.2f}s.")
     
     if output_file and valid_graphs:
         with open(output_file, 'w') as f:
             for g6 in valid_graphs:
                 f.write(g6 + "\n")
-        print(f"Saved {count} graphs to {output_file}")
+        if not quiet:
+            print(f"Saved {count} graphs to {output_file}")
         
     return valid_graphs
 
