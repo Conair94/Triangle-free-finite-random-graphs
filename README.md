@@ -29,4 +29,5 @@ It is much easier to check the above three properties rather than $\psi_k$ so th
 ## Bibliography
 1. "On Triply Existentially Complete Triangle-Free Graphs" https://arxiv.org/abs/1306.5637
 2. "On Existentially Complete Triangle-Free Graphs" https://arxiv.org/abs/1708.08817
-3. "Notes on Pseudofinite theories" https://www.math.ucla.edu/~chernikov/teaching/19F-MATH223M/Notes.pdf
+3. "Triange-Free Graphs with Diameter 2" https://arxiv.org/pdf/2406.00246
+4. "Notes on Pseudofinite theories" https://www.math.ucla.edu/~chernikov/teaching/19F-MATH223M/Notes.pdf
