@@ -38,4 +38,6 @@ It is much easier to check the above three properties rather than $\psi_k$ so th
 
 ### Interesting and Adjacent Papers:
 1. "The minimum number of maximal independent sets in twin-free graphs" https://uu.diva-portal.org/smash/get/diva2:1926761/FULLTEXT01.pdf
-2. 
+2. "Triangle-Free Graphs with Diameter 2" https://arxiv.org/pdf/2406.00246
+3. "UNIVERSAL GRAPHS WITH A FORBIDDEN SUBGRAPH:
+BLOCK PATH SOLIDITY" https://sites.math.rutgers.edu/~cherlin/Paper/PathSolidity.pdf
