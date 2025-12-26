@@ -1,4 +1,5 @@
 import subprocess
+import math
 import networkx as nx
 import matplotlib.pyplot as plt
 import argparse
@@ -22,8 +23,17 @@ def generate_graphs(n, res, mod):
     # -c: connected
     # -t: triangle-free
     # -q: suppress auxiliary output
-    # d4 min degree is 4
-    cmd = ["geng", "-Ctqd4D7", str(n), f"{res}/{mod}"]
+    # d4 min degree is 4 
+    # D7 max degree is 7
+    # res controls the slicing 
+    # mod controls the number of pieces
+
+    nedges_max = math.floor(((n-1)^2)/4+1)
+    # nedges_max is the upperbound on number of edges for a maximal non bipartite triangle free graph
+    nedges_min = 3*n-15
+    # nedges_min is the min number of edges as established by work of Erdos, DOI: 10.1002/jgt.3190180606
+
+    cmd = ["geng", "-Ctqd4D7", str(n), f"{nedges_min}:{nedges_max}", f"{res}/{mod}"]
     
     print(f"Running command: {' '.join(cmd)}")
     
