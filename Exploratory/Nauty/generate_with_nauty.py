@@ -24,7 +24,7 @@ def generate_graphs(n, res, mod):
     # -t: triangle-free
     # -q: suppress auxiliary output
     # d4 min degree is 4 
-    # D7 max degree is 7
+    # D9 max degree is 9
     # res controls the slicing 
     # mod controls the number of pieces
 
