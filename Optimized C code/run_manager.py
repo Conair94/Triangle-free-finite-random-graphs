@@ -70,7 +70,7 @@ def main():
                  sys.exit(1)
             n = int(n_str)
             
-            default_mod = int(10**(n/3))
+            default_mod = int(10**(n/4))
             mod_str = input(f"Enter number of slices (mod) [Default {default_mod}]: ")
             mod = int(mod_str) if mod_str.strip() else default_mod
             
@@ -179,7 +179,7 @@ def main():
     with open(output_file, 'a') as f_out, open(progress_file, 'a') as f_prog:
         # If new file, write header (and progress file header if needed)
         if write_header:
-             f_out.write("graph_g6,is_3_existential,num_vertices\n")
+             f_out.write("graph_g6,is_3_existential,is_andrasfai,num_vertices\n")
              f_out.flush()
         
         # If progress file is empty (or we ignored it), write mod header
