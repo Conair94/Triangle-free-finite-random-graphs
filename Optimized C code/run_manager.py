@@ -106,7 +106,7 @@ def main():
         
     if mod is None: 
         if n is not None:
-            mod = int(10**(n/3 + 1))
+            mod = int(10**(n/4))
         else:
             mod = 1
     
