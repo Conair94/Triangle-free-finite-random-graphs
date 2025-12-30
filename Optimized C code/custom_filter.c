@@ -61,6 +61,58 @@ boolean is_twin_free(graph *g, int m, int n) {
 }
 
 /*
+ * Checks if the graph is bipartite using BFS 2-coloring.
+ */
+boolean is_bipartite(graph *g, int m, int n) {
+    int *color = (int*) malloc(n * sizeof(int));
+    int *queue = (int*) malloc(n * sizeof(int));
+    int head, tail;
+    int i, j;
+    setword *gv;
+    
+    if (!color || !queue) {
+        fprintf(stderr, "Malloc failed in is_bipartite\n");
+        exit(1);
+    }
+
+    for (i = 0; i < n; i++) color[i] = 0; // 0 = uncolored, 1 = color A, 2 = color B
+
+    for (int start_node = 0; start_node < n; start_node++) {
+        if (color[start_node] != 0) continue;
+        
+        head = 0; 
+        tail = 0;
+        
+        color[start_node] = 1;
+        queue[tail++] = start_node;
+        
+        while (head < tail) {
+            int v = queue[head++];
+            int c = color[v];
+            int next_c = (c == 1) ? 2 : 1;
+            
+            gv = GRAPHROW(g, v, m);
+            for (j = 0; j < n; j++) {
+                if (ISELEMENT(gv, j)) {
+                    if (color[j] == 0) {
+                        color[j] = next_c;
+                        queue[tail++] = j;
+                    } else if (color[j] == c) {
+                        free(color);
+                        free(queue);
+                        return FALSE; // Conflict: adjacent nodes have same color
+                    }
+                }
+            }
+        }
+    }
+    
+    free(color);
+    free(queue);
+    return TRUE;
+}
+
+/*
  * Checks if all pairs of disjoint independent sets of size 3 have a common neighbor.
  * That is, for any two independent sets A and B with |A|=3, |B|=3, and A disjoint from B,
  * there exists a vertex z adjacent to all vertices in A U B.
@@ -130,7 +182,11 @@ int main(int argc, char *argv[]) {
     // readg signature: graph *readg(FILE *f, graph *g, int reqm, int *m, int *n)
     
     while ((g = readg(stdin, NULL, 0, &m, &n)) != NULL) {
-        if (is_twin_free(g, m, n) && is_maximal_triangle_free(g, m, n)) {
+        // Must be twin-free AND maximal triangle-free AND NOT bipartite
+        if (is_twin_free(g, m, n) && 
+            is_maximal_triangle_free(g, m, n) && 
+            !is_bipartite(g, m, n)) {
+            
             char *s = ntog6(g, m, n);
             size_t len = strlen(s);
             if (len > 0 && s[len-1] == '\n') s[len-1] = '\0';

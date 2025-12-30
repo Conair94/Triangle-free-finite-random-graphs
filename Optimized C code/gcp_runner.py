@@ -9,7 +9,9 @@ def run_generation(n, output_file, mod=None):
     """
     Runs the run_manager.py script to generate graphs for a specific N.
     """
-    cmd = [sys.executable, "run_manager.py", str(n), "--output", output_file]
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    run_manager_path = os.path.join(script_dir, "run_manager.py")
+    cmd = [sys.executable, run_manager_path, str(n), "--output", output_file]
     
     if mod is not None:
         cmd.extend(["--mod", str(mod)])

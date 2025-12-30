@@ -70,7 +70,7 @@ def main():
                  sys.exit(1)
             n = int(n_str)
             
-            default_mod = int(10**(n/3 + 1))
+            default_mod = int(10**(n/3))
             mod_str = input(f"Enter number of slices (mod) [Default {default_mod}]: ")
             mod = int(mod_str) if mod_str.strip() else default_mod
             
