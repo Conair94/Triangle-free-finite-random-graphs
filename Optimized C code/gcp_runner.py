@@ -11,12 +11,9 @@ def run_generation(n, output_file, mod=None):
     """
     cmd = [sys.executable, "run_manager.py", str(n), "--output", output_file]
     
-    # Heuristic for mod: Use 4 * cpu_count to keep pipeline full
-    if mod is None:
-        cpu_count = os.cpu_count() or 1
-        mod = cpu_count * 4
+    if mod is not None:
+        cmd.extend(["--mod", str(mod)])
     
-    cmd.extend(["--mod", str(mod)])
     # Use all CPUs
     cmd.extend(["--jobs", str(os.cpu_count() or 1)])
     
@@ -61,12 +58,12 @@ def upload_to_bigquery(client, filename, table_ref):
         return False
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate graphs for N=6-16 and upload to BigQuery.")
+    parser = argparse.ArgumentParser(description="Generate graphs for N=6-14 and upload to BigQuery.")
     parser.add_argument("--project", required=True, help="Google Cloud Project ID")
     parser.add_argument("--dataset", required=True, help="BigQuery Dataset ID")
     parser.add_argument("--table", required=True, help="BigQuery Table ID")
     parser.add_argument("--start-n", type=int, default=6, help="Start N (inclusive)")
-    parser.add_argument("--end-n", type=int, default=16, help="End N (inclusive)")
+    parser.add_argument("--end-n", type=int, default=14, help="End N (inclusive)")
     parser.add_argument("--keep-files", action="store_true", help="Do not delete generated CSV files")
     
     args = parser.parse_args()

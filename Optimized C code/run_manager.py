@@ -70,8 +70,9 @@ def main():
                  sys.exit(1)
             n = int(n_str)
             
-            mod_str = input("Enter number of slices (mod) [Default 1]: ")
-            mod = int(mod_str) if mod_str.strip() else 1
+            default_mod = int(10**(n/3 + 1))
+            mod_str = input(f"Enter number of slices (mod) [Default {default_mod}]: ")
+            mod = int(mod_str) if mod_str.strip() else default_mod
             
             min_deg_str = input("Enter minimum degree [Default 3]: ")
             min_deg = int(min_deg_str) if min_deg_str.strip() else 3
@@ -103,7 +104,11 @@ def main():
     if not output_file:
         output_file = f"graphs_n{n}_deg{min_deg}_{max_deg}.csv"
         
-    if mod is None: mod = 1
+    if mod is None: 
+        if n is not None:
+            mod = int(10**(n/3 + 1))
+        else:
+            mod = 1
     
     # Save to Results folder
     results_dir = os.path.join(script_dir, "Results")
@@ -128,64 +133,96 @@ def main():
             print("Aborted.")
             sys.exit(0)
 
-    # Prepare tasks
-    tasks = [(n, r, mod, min_deg, max_deg) for r in range(mod)]
+    # Resume logic
+    progress_file = f"{output_file}.progress"
+    completed_slices = set()
+    if os.path.exists(progress_file):
+        try:
+            with open(progress_file, 'r') as f:
+                header = f.readline().strip()
+                if header.startswith("# MOD:"):
+                    saved_mod = int(header.split(":")[1])
+                    if saved_mod != mod:
+                        print(f"WARNING: Saved mod ({saved_mod}) in progress file does not match current mod ({mod}).")
+                        print("Ignoring progress file to avoid inconsistency. (Or stop and fix mod)")
+                        # In strict resume, we might exit. Here we just ignore progress if mismatch.
+                        completed_slices = set()
+                    else:
+                        for line in f:
+                            if line.strip():
+                                completed_slices.add(int(line.strip()))
+            print(f"Resuming from progress file. {len(completed_slices)} slices already completed.")
+        except Exception as e:
+            print(f"Error reading progress file: {e}. Starting fresh.")
+            completed_slices = set()
+
+    # Prepare tasks (skip completed)
+    tasks = [(n, r, mod, min_deg, max_deg) for r in range(mod) if r not in completed_slices]
     
-    all_graphs = []
-    stats = []
+    if not tasks:
+        print("All slices completed according to progress file.")
+        sys.exit(0)
+
+    # Check if we need to write CSV header
+    # Write header if file doesn't exist or is empty
+    write_header = not os.path.exists(output_file) or os.path.getsize(output_file) == 0
     
     start_total = time.time()
     
     print("\nStarting workers...")
     
     # Use multiprocessing Pool
-    completed = 0
-    with multiprocessing.Pool(processes=jobs) as pool:
-        # Use imap_unordered to process results as they finish
-        for res, count, elapsed, result_data in pool.imap_unordered(worker_task, tasks):
-            completed += 1
-            if isinstance(result_data, str):
-                # Error happened
-                print(f"[Slice {res}/{mod}] FAILED: {result_data}")
-            else:
-                all_graphs.extend(result_data)
-                stats.append((res, count, elapsed))
-                print(f"[Slice {res:>{len(str(mod))}}/{mod}] Finished in {elapsed:.2f}s | Found: {count} graphs | Progress: {completed}/{mod} ({(completed/mod)*100:.1f}%)")
+    completed_count = len(completed_slices)
+    total_graphs_found = 0
+    
+    # Open files for appending
+    with open(output_file, 'a') as f_out, open(progress_file, 'a') as f_prog:
+        # If new file, write header (and progress file header if needed)
+        if write_header:
+             f_out.write("graph_g6,is_3_existential,num_vertices\n")
+             f_out.flush()
+        
+        # If progress file is empty (or we ignored it), write mod header
+        if os.path.exists(progress_file) and os.path.getsize(progress_file) == 0:
+            f_prog.write(f"# MOD: {mod}\n")
+            f_prog.flush()
+        elif not os.path.exists(progress_file):
+            with open(progress_file, 'w') as f_temp:
+                f_temp.write(f"# MOD: {mod}\n")
+        
+        with multiprocessing.Pool(processes=jobs) as pool:
+            # Use imap_unordered to process results as they finish
+            for res, count, elapsed, result_data in pool.imap_unordered(worker_task, tasks):
+                completed_count += 1
+                if isinstance(result_data, str):
+                    # Error happened
+                    print(f"[Slice {res}/{mod}] FAILED: {result_data}")
+                else:
+                    # Write graphs immediately
+                    for g6 in result_data:
+                        f_out.write(f"{g6},{n}\n")
+                    f_out.flush()
+                    
+                    # Mark progress
+                    f_prog.write(f"{res}\n")
+                    f_prog.flush()
+                    
+                    total_graphs_found += count
+                    print(f"[Slice {res:>{len(str(mod))}}/{mod}] Finished in {elapsed:.2f}s | Found: {count} graphs | Progress: {completed_count}/{mod} ({(completed_count/mod)*100:.1f}%)")
 
     end_total = time.time()
     total_time = end_total - start_total
-    
-    # Sorting stats by slice index for the report (if we printed a table later, but we just summarized)
-    stats.sort(key=lambda x: x[0])
     
     print("\n" + "=" * 40)
     print("GENERATION COMPLETE")
     print("=" * 40)
     print(f"Total time: {str(datetime.timedelta(seconds=total_time))}")
-    print(f"Total graphs found: {len(all_graphs)}")
+    print(f"Total graphs found this run: {total_graphs_found}")
+    print(f"Results saved to '{output_file}'")
     
-    if stats:
-        times = [s[2] for s in stats]
-        avg_time = statistics.mean(times)
-        max_time = max(times)
-        min_time = min(times)
-        print(f"Average time per slice: {avg_time:.2f}s")
-        print(f"Max time per slice: {max_time:.2f}s")
-        print(f"Min time per slice: {min_time:.2f}s")
-    
-    # Writing to file
-    if all_graphs:
-        print(f"\nWriting {len(all_graphs)} graphs to '{output_file}'...")
-        try:
-            with open(output_file, 'w') as f:
-                f.write("graph_g6,is_3_existential,num_vertices\n")
-                for line in all_graphs:
-                    f.write(f"{line},{n}\n")
-            print("Done.")
-        except Exception as e:
-            print(f"Error writing to file: {e}")
-    else:
-        print("\nNo graphs found. File not created.")
+    # Optional: Clean up progress file if 100% complete?
+    # keeping it is safer for verification.
+
 
 if __name__ == "__main__":
     main()
