@@ -41,6 +41,7 @@ def upload_to_bigquery(client, filename, table_ref):
         schema=[
             bigquery.SchemaField("graph_g6", "STRING"),
             bigquery.SchemaField("is_3_existential", "INTEGER"),
+            bigquery.SchemaField("is_andrasfai", "INTEGER"),
             bigquery.SchemaField("num_vertices", "INTEGER"),
         ],
         write_disposition=bigquery.WriteDisposition.WRITE_APPEND,

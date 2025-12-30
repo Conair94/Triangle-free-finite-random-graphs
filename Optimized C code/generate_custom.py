@@ -116,7 +116,7 @@ def generate_custom_graphs(n, res, mod, min_deg=3, max_deg=None, output_file=Non
     
     if output_file and valid_graphs:
         with open(output_file, 'w') as f:
-            f.write("graph_g6,is_3_existential,num_vertices\n")
+            f.write("graph_g6,is_3_existential,is_andrasfai,num_vertices\n")
             for line in valid_graphs:
                 f.write(f"{line},{n}\n")
         if not quiet:

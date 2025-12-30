@@ -113,6 +113,47 @@ boolean is_bipartite(graph *g, int m, int n) {
 }
 
 /*
+ * Checks if the graph is a potential Andrásfai graph And(k).
+ * And(k) has 3k-1 vertices and is regular with degree k.
+ * This function checks size and regularity as a proxy.
+ * Strict isomorphism would require constructing And(k) and comparing canonical forms.
+ */
+boolean is_andrasfai(graph *g, int m, int n) {
+    // 1. Check size: N must be 3k-1, so (N+1) % 3 == 0
+    if ((n + 1) % 3 != 0) return FALSE;
+    
+    int k = (n + 1) / 3;
+    
+    // 2. Check regularity: Every vertex must have degree k
+    // Since And(k) is vertex transitive, it is regular.
+    int i, deg;
+    setword *gv;
+    
+    for (i = 0; i < n; i++) {
+        gv = GRAPHROW(g, i, m);
+        
+        // Count set bits efficiently
+        deg = 0;
+        for (int w = 0; w < m; w++) {
+            // Check popcount support
+            #ifdef POPCOUNT
+                deg += POPCOUNT(gv[w]);
+            #else
+                setword x = gv[w];
+                while (x) {
+                    if (x & 1) deg++;
+                    x >>= 1;
+                }
+            #endif
+        }
+        
+        if (deg != k) return FALSE;
+    }
+    
+    return TRUE;
+}
+
+/*
  * Checks if all pairs of disjoint independent sets of size 3 have a common neighbor.
  * That is, for any two independent sets A and B with |A|=3, |B|=3, and A disjoint from B,
  * there exists a vertex z adjacent to all vertices in A U B.
@@ -190,7 +231,7 @@ int main(int argc, char *argv[]) {
             char *s = ntog6(g, m, n);
             size_t len = strlen(s);
             if (len > 0 && s[len-1] == '\n') s[len-1] = '\0';
-            printf("%s,%d\n", s, is_3_existential(g, m, n));
+            printf("%s,%d,%d\n", s, is_3_existential(g, m, n), is_andrasfai(g, m, n));
         }
         FREES(g);
     }
