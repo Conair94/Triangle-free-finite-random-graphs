@@ -84,7 +84,7 @@ def main():
             jobs_str = input(f"Enter number of parallel jobs [Default {default_jobs}]: ")
             jobs = int(jobs_str) if jobs_str.strip() else default_jobs
             
-            default_output = f"graphs_n{n}_deg{min_deg}_{max_deg}.g6"
+            default_output = f"graphs_n{n}_deg{min_deg}_{max_deg}.csv"
             output_file_input = input(f"Enter output filename [Default '{default_output}']: ")
             if output_file_input.strip():
                 output_file = output_file_input
@@ -101,7 +101,7 @@ def main():
             
     # Default output filename if not set
     if not output_file:
-        output_file = f"graphs_n{n}_deg{min_deg}_{max_deg}.g6"
+        output_file = f"graphs_n{n}_deg{min_deg}_{max_deg}.csv"
         
     if mod is None: mod = 1
     
@@ -178,8 +178,9 @@ def main():
         print(f"\nWriting {len(all_graphs)} graphs to '{output_file}'...")
         try:
             with open(output_file, 'w') as f:
-                for g6 in all_graphs:
-                    f.write(g6 + "\n")
+                f.write("graph_g6,is_3_existential,num_vertices\n")
+                for line in all_graphs:
+                    f.write(f"{line},{n}\n")
             print("Done.")
         except Exception as e:
             print(f"Error writing to file: {e}")

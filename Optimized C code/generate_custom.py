@@ -116,8 +116,9 @@ def generate_custom_graphs(n, res, mod, min_deg=3, max_deg=None, output_file=Non
     
     if output_file and valid_graphs:
         with open(output_file, 'w') as f:
-            for g6 in valid_graphs:
-                f.write(g6 + "\n")
+            f.write("graph_g6,is_3_existential,num_vertices\n")
+            for line in valid_graphs:
+                f.write(f"{line},{n}\n")
         if not quiet:
             print(f"Saved {count} graphs to {output_file}")
         
@@ -139,7 +140,7 @@ def main():
         deg_str = f"_deg{args.min_deg}"
         if args.max_deg:
             deg_str += f"_{args.max_deg}"
-        args.output = f"graphs_n{args.N}{deg_str}_{args.res}_{args.mod}.g6"
+        args.output = f"graphs_n{args.N}{deg_str}_{args.res}_{args.mod}.csv"
         
     generate_custom_graphs(args.N, args.res, args.mod, args.min_deg, args.max_deg, args.output)
 
