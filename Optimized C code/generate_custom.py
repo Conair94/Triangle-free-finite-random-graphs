@@ -104,8 +104,8 @@ def generate_custom_graphs(n, res, mod, min_deg=3, max_deg=None, output_file=Non
         geng_proc.wait()
         
     except Exception as e:
-        if not quiet:
-            print(f"Error during generation: {e}")
+        # Always print errors, even in quiet mode
+        print(f"Error during generation (Slice {res}/{mod}): {e}")
         return []
         
     end_time = time.time()
